@@ -1,0 +1,37 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: dotnet restore
+  inputs:
+    command: restore
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet build $(buildConfiguration)
+  inputs:
+    command: build
+    arguments: --configuration $(buildConfiguration)
+    projects: eConnect.IntegrationService/eConnect.IntegrationService.csproj
+
+- task: DotNetCoreCLI@2
+  displayName: dotnet pack
+  inputs:
+    command: pack
+    arguments: --configuration $(buildConfiguration)
+    packagesToPack: eConnect.IntegrationService/eConnect.IntegrationService.csproj
+    nobuild: true
+
+- script: dotnet nuget push $(Build.ArtifactStagingDirectory)/*.nupkg --api-key $(nugetApiKey)
+  displayName: push package to nuget.org
